@@ -1,2 +1,0 @@
-from sorter import sort
-
