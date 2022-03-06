@@ -2,17 +2,17 @@ import csv
 import random
 
 
-def generate(k, burst_pow_min, burst_pow_max, mem_min, mem_max):
+def generate(k, m, n, a, b):
     """
-    Will generate a list of process tuples with the burst ranging between 10 * 10^n - 10 * 10^m and the memory between given parameters
+    Will generate a list of process tuples with the burst ranging between 10 * 10^n - 10 * 10^m and the memory between a - b
     """
     proccesses = []
 
     def burst_time():
-        return random.randint(pow(10, burst_pow_min + 1), pow(10, burst_pow_max + 1))
+        return random.randint(pow(10, m + 1), pow(10, n + 1))
 
     def mem():
-        return random.randint(mem_min, mem_max)
+        return random.randint(a, b)
 
     for i in range(k):
         new_process = (i, burst_time(), mem())
