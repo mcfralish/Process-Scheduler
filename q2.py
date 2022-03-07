@@ -25,9 +25,14 @@ def FIFO(fname, num_slow, num_fast):
         for i in range(len(processes)):
             sum += int(processes[i][1])
 
-        mean = sum / len(processes)
+        ratio = (num_slow * 2)/(num_slow * 2 + num_fast * 4)
 
-        return mean - (mean / 6)
+        mean = sum/len(processes)
+
+        print("ratio = ", ratio)
+        print("mean = ", "{:e}".format(mean))
+
+        return ratio * mean
 
     # threshold = pow(10, 13) - 5000000000000
 
