@@ -10,6 +10,67 @@ class processor:
         self.time_current = 0
 
 
+def set_threshold(processes, num_slow, num_fast):
+    """
+    Sets threshold proportionate to the amount of work expected from each set of processors. In a system with equal number fast and slow processors, with the slow running at half of the speed of the fast, the slow will be rewsponsible for 1/3 of the work.
+    """
+    total_burst = 0
+    min = float("inf")
+    for i in range(len(processes)):
+        burst = int(processes[i][1])
+        if burst < min:
+            min = burst
+        total_burst += burst
+
+    ratio = (num_slow * 2) / (num_slow * 2 + num_fast * 4)
+
+    mean = total_burst / len(processes)
+
+    def stdev():
+        sd = 0
+        for i in range(len(processes)):
+            sd += (int(processes[i][1]) - mean) ** 2
+
+        sd = sd / len(processes)
+        sd = sqrt(sd)
+        print("Stand Dev: ", "{:e}".format(sd))
+        return sd
+
+    print("ratio = ", ratio)
+    print("mean = ", "{:e}".format(mean))
+    print("min =", "{:e}".format(min))
+
+    return (ratio * mean) + stdev() * 1.4
+
+
+def slow_step(processors, num_slow):
+    """
+    Steps the slow processors through running until the one with the least amount of time remaining is finished with its current process.
+    """
+    current_slows = []
+    for i in range(num_slow):
+        current_slows.append(processors[i].time_current)
+
+    mini = min(current_slows)
+
+    for i in range(num_slow):
+        processors[i].time_current -= mini
+
+
+def fast_step(processors, num_slow, num_fast):
+    """
+    Steps the fast processors through running until the one with the least amount of time remaining is finished with its current process.
+    """
+    current_fasts = []
+    for i in range(num_fast):
+        current_fasts.append(processors[i + num_slow].time_current)
+
+    mini = min(current_fasts)
+
+    for i in range(num_fast):
+        processors[i + num_slow].time_current -= mini
+
+
 def FIFO(fname, num_slow, num_fast):
 
     processors = []
@@ -21,64 +82,8 @@ def FIFO(fname, num_slow, num_fast):
 
     processes = unsorted_processes(fname)
 
-    def set_threshold():
-        """
-        Sets threshold proportionate to the amount of work expected from each set of processors. In a system with equal number fast and slow processors, with the slow running at half of the speed of the fast, the slow will be rewsponsible for 1/3 of the work.
-        """
-        sum = 0
-        for i in range(len(processes)):
-            sum += int(processes[i][1])
-
-        ratio = (num_slow * 2)/(num_slow * 2 + num_fast * 4)
-
-        mean = sum/len(processes)
-        
-        def stdev():
-            sd = 0
-            for i in range(len(processes)):
-                sd += (int(processes[i][1]) - mean)**2
-
-            sd = sd/len(processes)
-            sd = sqrt(sd)
-            print("Stand Dev: ", sd)
-            return sd
-
-
-        print("ratio = ", ratio)
-        print("mean = ", "{:e}".format(mean))
-
-        return (ratio * mean) + stdev()
-
-    def slow_step():
-        """
-        Steps the slow processors through running until the one with the least amount of time remaining is finished with its current process.
-        """
-        current_slows = []
-        for i in range(num_slow):
-            current_slows.append(processors[i].time_current)
-
-        mini = min(current_slows)
-
-        for i in range(num_slow):
-            processors[i].time_current -= mini
-
-    def fast_step():
-        """
-        Steps the fast processors through running until the one with the least amount of time remaining is finished with its current process.
-        """
-        current_fasts = []
-        for i in range(num_fast):
-            current_fasts.append(processors[i + num_slow].time_current)
-
-        mini = min(current_fasts)
-
-        for i in range(num_fast):
-            processors[i + num_slow].time_current -= mini
-
-
-    threshold = set_threshold()
+    threshold = set_threshold(processes, num_slow, num_fast)
     print("Threshold set at: ", "{:e}".format(threshold))
-
 
     slow_index = 0
     fast_index = num_slow
@@ -88,7 +93,6 @@ def FIFO(fname, num_slow, num_fast):
     processor_count = [0, 0, 0, 0, 0, 0]
     wait = [0, 0, 0, 0, 0, 0]
     turnaround = [0, 0, 0, 0, 0, 0]
-
 
     for i in range(len(processes)):
         burst_time = int(processes[i][1])
@@ -103,7 +107,7 @@ def FIFO(fname, num_slow, num_fast):
 
             # adds burst time to the selected processors job queue
             processors[slow_index].time_current += burst_time
-            slow_step()
+            slow_step(processors, num_slow)
             wait_times.append(processors[slow_index].time_elapsed)
             wait[slow_index] += processors[slow_index].time_elapsed
             processors[slow_index].time_elapsed += burst_time
@@ -117,15 +121,14 @@ def FIFO(fname, num_slow, num_fast):
                 if fast_index == (num_slow + num_fast):
                     fast_index -= num_fast
 
-            processors[fast_index].time_current =+ burst_time
-            fast_step()
+            processors[fast_index].time_current = +burst_time
+            fast_step(processors, num_slow, num_fast)
             wait_times.append(processors[fast_index].time_elapsed)
             wait[fast_index] += processors[fast_index].time_elapsed
             processors[fast_index].time_elapsed += burst_time / 2
             turnaround_times.append(processors[fast_index].time_elapsed)
             turnaround[fast_index] += processors[fast_index].time_elapsed
             processor_count[fast_index] += 1
-
 
     # Print processor results
     print()
@@ -142,6 +145,10 @@ def FIFO(fname, num_slow, num_fast):
 
     # print(wait_times)
     # print(turnaround_times)
+
+
+def SJF(fname, numslow, numfast):
+    return
 
 
 FIFO("./processes.csv", 3, 3)
