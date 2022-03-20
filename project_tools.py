@@ -41,6 +41,7 @@ def sorted_processes(fname, column_index):
     """
     reader = csv.reader(open(fname), delimiter=",")
     sortedlist = sorted(reader, key=lambda row: row[column_index])
+    sortedlist.pop(-1)
     return sortedlist
 
 
