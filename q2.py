@@ -293,8 +293,45 @@ def SJF(fname, num_slow, num_fast):
 
 
 def RR(fname, num_slow, num_fast):
-    
-    return
+    # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
+    processors = []
+    for i in range(num_slow):
+        processors.append(processor(2))
+
+    for i in range(num_fast):
+        processors.append(processor(4))
+
+    # Creates a list of the processes from .csv file in order they are given
+    processes = unsorted_processes(fname)
+
+    # Sets threshold
+    threshold = set_threshold(processes, num_slow, num_fast)
+    print("Threshold set at: ", "{:e}".format(threshold))
+
+    # Sets indices to iterate through proccessor list
+    slow_index = 0
+    fast_index = num_slow
+
+    # Creates lists to track wait times and turnaround times
+    wait_times = []
+    turnaround_times = []
+
+    # Creates and initiates lists to track how many times each processor ran and the total wait and turnaround times of each processor
+    processor_count = []
+    wait = []
+    turnaround = []
+    for i in range(len(processors)):
+        processor_count.append(0)
+        wait.append(0)
+        turnaround.append(0)
+
+    i, j = 0
+    allEmpty = False
+    quantum = 1 * 10**9
+
+    while not allEmpty:
+        allEmpty = False
+
 
 FIFO("./processes.csv", 3, 3)
 SJF("./processes.csv", 3, 3)
