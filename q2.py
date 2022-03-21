@@ -292,7 +292,7 @@ def SJF(fname, num_slow, num_fast):
     )
 
 
-def RR(fname, num_slow, num_fast):
+def RR(fname, num_slow, num_fast, quantum):
     # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
     processors = []
     for i in range(num_slow):
@@ -327,11 +327,95 @@ def RR(fname, num_slow, num_fast):
 
     i, j = 0
     allEmpty = False
-    quantum = 1 * 10**9
+    firstEmpty = None
+    slow_index = 0
+    fast_index = num_slow
+    ratio = ((num_slow * 2) / (num_slow * 2 + num_fast * 4)).as_integer_ratio()
+    slow_max = ratio[0]
+    total_max = ratio[1]
 
     while not allEmpty:
+        # loops i when it goes over the number of processes to start back at the beginning
+        if i == len(processes):
+            i = 0
+
+        burst_time = int(processes[i][1])
+
+        if (burst_time == 0) and (i == firstEmpty):
+            allEmpty = True
+
+        elif (burst_time == 0) and firstEmpty is None:
+            firstEmpty = i
+            i += 1
+
+        elif burst_time == 0:
+            i += 1
+
+        # Choose slow or fast processor based on ratio
+        if j <= slow_max:
+
+            # find the next available slow processor
+            while processors[slow_index].time_current != 0:
+                slow_index += 1
+                if slow_index == num_slow:
+                    slow_index -= num_slow
+
+            if burst_time <= quantum:
+
+                # Adds burst time to the selected processor's job queue
+                processors[slow_index].time_current += burst_time
+
+                # Steps forward to simulate the passage of time so that one slow processor will be available
+                slow_step(processors, num_slow)
+
+                # Adds wait time to list of all wait times and to the total wait time for the selected processor
+                wait_times.append(processors[slow_index].time_elapsed)
+                wait[slow_index] += processors[slow_index].time_elapsed
+
+                # Adds burst time of current process to selected processor's elapsed time
+                processors[slow_index].time_elapsed += burst_time
+
+                # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+                turnaround_times.append(processors[slow_index].time_elapsed)
+                turnaround[slow_index] += processors[slow_index].time_elapsed
+
+                # Increments the amount of times the processor ran
+                processor_count[slow_index] += 1
+
+            else:
+                # Adds quantum to the selected processor's job queue
+                processors[slow_index].time_current += quantum
+
+                # Steps forward to simulate the passage of time so that one slow processor will be available
+                slow_step(processors, num_slow)
+
+                # Adds wait time to list of all wait times and to the total wait time for the selected processor
+                wait_times.append(processors[slow_index].time_elapsed)
+                wait[slow_index] += processors[slow_index].time_elapsed
+
+                # Adds quantum of current process to selected processor's elapsed time
+                processors[slow_index].time_elapsed += quantum
+
+                # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+                turnaround_times.append(processors[slow_index].time_elapsed)
+                turnaround[slow_index] += processors[slow_index].time_elapsed
+
+                # Increments the amount of times the processor ran
+                processor_count[slow_index] += 1
+
+        else:
+
+            index = fast_index
+
+        if burst_time < quantum:
+            processes[i][1] = 0
+
+        else:
+            processes[i][1]
         allEmpty = False
 
 
+quantum = 1 * 10**9
 FIFO("./processes.csv", 3, 3)
 SJF("./processes.csv", 3, 3)
+# RR('processes.csv', 3, 3, quantum)
