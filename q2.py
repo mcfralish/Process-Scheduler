@@ -163,7 +163,7 @@ def FIFO(fname, num_slow, num_fast):
                     fast_index -= num_fast
 
             # Adds burst time to the selected processor's job queue
-            processors[fast_index].time_current += burst_time
+            processors[fast_index].time_current += burst_time / 2
 
             # Steps forward to simulate the passage of time so that one slow processor will be available
             fast_step(processors, num_slow, num_fast)
@@ -330,6 +330,8 @@ def RR(fname, num_slow, num_fast, quantum):
     firstEmpty = None
     slow_index = 0
     fast_index = num_slow
+
+    # Divides ratio of work based on how much the work can be expected from each group of processors
     ratio = ((num_slow * 2) / (num_slow * 2 + num_fast * 4)).as_integer_ratio()
     slow_max = ratio[0]
     total_max = ratio[1]
@@ -341,78 +343,153 @@ def RR(fname, num_slow, num_fast, quantum):
 
         burst_time = int(processes[i][1])
 
+        # Determines if every process has been run to 0 remaining burst time
+        # then terminates the loop
         if (burst_time == 0) and (i == firstEmpty):
             allEmpty = True
 
+        # Determines if this is the first time it has detected a zero'd burst time
+        # then increments i and starts loop again
         elif (burst_time == 0) and firstEmpty is None:
             firstEmpty = i
             i += 1
 
+        # Will trigger if current process has a remaining burst time of 0
+        # and the one before was also 0.
+        # Increments i and restarts 
         elif burst_time == 0:
             i += 1
 
-        # Choose slow or fast processor based on ratio
-        if j <= slow_max:
+        # Triggers if all checks prior fail and the burst time is an integer greater than 0
+        # Will execute a subtraction of the given 
+        else:
 
-            # find the next available slow processor
-            while processors[slow_index].time_current != 0:
-                slow_index += 1
-                if slow_index == num_slow:
-                    slow_index -= num_slow
+            firstEmpty = None
 
-            if burst_time <= quantum:
+            # Checks if j has met the total max (the denominator of the ratio) 
+            # than resets j if true
+            if j == total_max:
+                j = 0
 
-                # Adds burst time to the selected processor's job queue
-                processors[slow_index].time_current += burst_time
+            # Choose slow or fast processor based on ratio
+            # Will choose slow while j is less than the slow max (numerator of the ratio)
+            if j < slow_max:
+                # Control for slow processor choice
 
-                # Steps forward to simulate the passage of time so that one slow processor will be available
-                slow_step(processors, num_slow)
+                # find the next available slow processor
+                while processors[slow_index].time_current != 0:
+                    slow_index += 1
+                    if slow_index == num_slow:
+                        slow_index -= num_slow
 
-                # Adds wait time to list of all wait times and to the total wait time for the selected processor
-                wait_times.append(processors[slow_index].time_elapsed)
-                wait[slow_index] += processors[slow_index].time_elapsed
+                # Determines if remaining burst time is less than a quantum or not
+                if burst_time <= quantum:
 
-                # Adds burst time of current process to selected processor's elapsed time
-                processors[slow_index].time_elapsed += burst_time
+                    # Adds burst time to the selected processor's job queue
+                    processors[slow_index].time_current += burst_time
 
-                # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
-                turnaround_times.append(processors[slow_index].time_elapsed)
-                turnaround[slow_index] += processors[slow_index].time_elapsed
+                    # Steps forward to simulate the passage of time so that one slow processor will be available
+                    slow_step(processors, num_slow)
 
-                # Increments the amount of times the processor ran
-                processor_count[slow_index] += 1
+                    # Adds wait time to list of all wait times and to the total wait time for the selected processor
+                    wait_times.append(processors[slow_index].time_elapsed)
+                    wait[slow_index] += processors[slow_index].time_elapsed
+
+                    # Adds burst time of current process to selected processor's elapsed time
+                    processors[slow_index].time_elapsed += burst_time
+
+                    # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+                    turnaround_times.append(processors[slow_index].time_elapsed)
+                    turnaround[slow_index] += processors[slow_index].time_elapsed
+
+                    # Increments the amount of times the processor ran
+                    processor_count[slow_index] += 1
+
+                    processes[i][1] = 0
+
+                else:
+                    # Adds quantum to the selected processor's job queue
+                    processors[slow_index].time_current += quantum
+
+                    # Steps forward to simulate the passage of time so that one slow processor will be available
+                    slow_step(processors, num_slow)
+
+                    # Adds wait time to list of all wait times and to the total wait time for the selected processor
+                    wait_times.append(processors[slow_index].time_elapsed)
+                    wait[slow_index] += processors[slow_index].time_elapsed
+
+                    # Adds quantum of current process to selected processor's elapsed time
+                    processors[slow_index].time_elapsed += quantum
+
+                    # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+                    turnaround_times.append(processors[slow_index].time_elapsed)
+                    turnaround[slow_index] += processors[slow_index].time_elapsed
+
+                    # Increments the amount of times the processor ran
+                    processor_count[slow_index] += 1
+
+                    # Resets the burst time to subtract the quantum
+                    processes[i][1] = burst_time - quantum
 
             else:
-                # Adds quantum to the selected processor's job queue
-                processors[slow_index].time_current += quantum
+                # Control for fast processor choice.
 
-                # Steps forward to simulate the passage of time so that one slow processor will be available
-                slow_step(processors, num_slow)
+                # Find next available fast processor
+                while processors[fast_index].time_current != 0:
+                    fast_index += 1
+                    if fast_index == (num_slow + num_fast):
+                        fast_index -= num_fast
 
-                # Adds wait time to list of all wait times and to the total wait time for the selected processor
-                wait_times.append(processors[slow_index].time_elapsed)
-                wait[slow_index] += processors[slow_index].time_elapsed
+                if burst_time <= quantum:
 
-                # Adds quantum of current process to selected processor's elapsed time
-                processors[slow_index].time_elapsed += quantum
+                    # Adds burst time to the selected processor's job queue
+                    processors[fast_index].time_current += burst_time / 2
 
-                # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
-                turnaround_times.append(processors[slow_index].time_elapsed)
-                turnaround[slow_index] += processors[slow_index].time_elapsed
+                    # Steps forward to simulate the passage of time so that one slow processor will be available
+                    fast_step(processors, num_slow, num_fast)
 
-                # Increments the amount of times the processor ran
-                processor_count[slow_index] += 1
+                    # Adds wait time to list of all wait times and to the total wait time for the selected processor
+                    wait_times.append(processors[fast_index].time_elapsed)
+                    wait[slow_index] += processors[fast_index].time_elapsed
 
-        else:
+                    # Adds burst time of current process to selected processor's elapsed time
+                    processors[fast_index].time_elapsed += burst_time / 2
 
-            index = fast_index
+                    # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+                    turnaround_times.append(processors[fast_index].time_elapsed)
+                    turnaround[fast_index] += processors[fast_index].time_elapsed
 
-        if burst_time < quantum:
-            processes[i][1] = 0
+                    # Increments the amount of times the processor ran
+                    processor_count[fast_index] += 1
 
-        else:
-            processes[i][1]
-        allEmpty = False
+                    processes[i][1] = 0
+
+                else:
+                    # Adds quantum to the selected processor's job queue
+                    processors[fast_index].time_current += quantum / 2
+
+                    # Steps forward to simulate the passage of time so that one slow processor will be available
+                    fast_step(processors, num_slow, num_fast)
+
+                    # Adds wait time to list of all wait times and to the total wait time for the selected processor
+                    wait_times.append(processors[fast_index].time_elapsed)
+                    wait[fast_index] += processors[fast_index].time_elapsed
+
+                    # Adds quantum of current process to selected processor's elapsed time
+                    processors[fast_index].time_elapsed += quantum / 2
+
+                    # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+                    turnaround_times.append(processors[fast_index].time_elapsed)
+                    turnaround[fast_index] += processors[fast_index].time_elapsed
+
+                    # Increments the amount of times the processor ran
+                    processor_count[fast_index] += 1
+
+                    # Resets the burst time to subtract the quantum
+                    processes[i][1] = burst_time - quantum
+
+                i, j += 1
+        
 
 
 quantum = 1 * 10**9
