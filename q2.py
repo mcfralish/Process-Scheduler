@@ -76,6 +76,9 @@ def fast_step(processors, num_slow, num_fast):
 def print_results(
     processors, processor_count, wait, turnaround, wait_times, turnaround_times
 ):
+    """
+    Prints results for question 2.
+    """
     print()
     for i in range(len(processors)):
         print("Processor ", i, ":")
@@ -90,6 +93,9 @@ def print_results(
 
 
 def FIFO(fname, num_slow, num_fast):
+    """
+    Schedules according to big.LITTLE architecture with FIFO (First in First out)
+    """
 
     # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
     processors = []
@@ -192,6 +198,9 @@ def FIFO(fname, num_slow, num_fast):
 
 
 def SJF(fname, num_slow, num_fast):
+    """
+    Schedules according to big.LITTLE architecture with SJF (Shortest Job First)
+    """
     # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
     processors = []
     for i in range(num_slow):
@@ -295,6 +304,9 @@ def SJF(fname, num_slow, num_fast):
 
 
 def RR(fname, num_slow, num_fast, quantum):
+    """
+    Schedules according to big.LITTLE architecture with RR (Rount Robin
+    """
     # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
     processors = []
     for i in range(num_slow):
