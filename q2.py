@@ -1,6 +1,8 @@
 from statistics import mean
+from unicodedata import name
 from project_tools import sorted_processes, unsorted_processes
 from math import sqrt
+from fractions import Fraction
 
 
 class processor:
@@ -40,7 +42,7 @@ def set_threshold(processes, num_slow, num_fast):
     print("mean = ", "{:e}".format(mean))
     print("min =", "{:e}".format(min))
 
-    return (ratio * mean) + stdev() * 1.4
+    return (ratio * mean) + stdev() * 1.5
 
 
 def slow_step(processors, num_slow):
@@ -325,16 +327,21 @@ def RR(fname, num_slow, num_fast, quantum):
         wait.append(0)
         turnaround.append(0)
 
-    i, j = 0
+    i = 0
+    j = 0
+    context_switches = 0
     allEmpty = False
     firstEmpty = None
     slow_index = 0
     fast_index = num_slow
 
     # Divides ratio of work based on how much the work can be expected from each group of processors
-    ratio = ((num_slow * 2) / (num_slow * 2 + num_fast * 4)).as_integer_ratio()
-    slow_max = ratio[0]
-    total_max = ratio[1]
+    # ratio = ((num_slow * 2) / (num_slow * 2 + num_fast * 4)).as_integer_ratio()
+    ratio = Fraction((num_slow * 2) / (num_slow * 2 + num_fast * 4)).limit_denominator(
+        10
+    )
+    slow_max = ratio.numerator
+    total_max = ratio.denominator
 
     while not allEmpty:
         # loops i when it goes over the number of processes to start back at the beginning
@@ -356,17 +363,18 @@ def RR(fname, num_slow, num_fast, quantum):
 
         # Will trigger if current process has a remaining burst time of 0
         # and the one before was also 0.
-        # Increments i and restarts 
+        # Increments i and restarts
         elif burst_time == 0:
             i += 1
 
         # Triggers if all checks prior fail and the burst time is an integer greater than 0
-        # Will execute a subtraction of the given 
+        # Will execute a subtraction of the given
         else:
 
+            # Will stop tracking firstEmpty if it is discovered that one is not empty
             firstEmpty = None
 
-            # Checks if j has met the total max (the denominator of the ratio) 
+            # Checks if j has met the total max (the denominator of the ratio)
             # than resets j if true
             if j == total_max:
                 j = 0
@@ -450,7 +458,7 @@ def RR(fname, num_slow, num_fast, quantum):
 
                     # Adds wait time to list of all wait times and to the total wait time for the selected processor
                     wait_times.append(processors[fast_index].time_elapsed)
-                    wait[slow_index] += processors[fast_index].time_elapsed
+                    wait[fast_index] += processors[fast_index].time_elapsed
 
                     # Adds burst time of current process to selected processor's elapsed time
                     processors[fast_index].time_elapsed += burst_time / 2
@@ -488,11 +496,22 @@ def RR(fname, num_slow, num_fast, quantum):
                     # Resets the burst time to subtract the quantum
                     processes[i][1] = burst_time - quantum
 
-                i, j += 1
-        
+            i += 1
+            j += 1
+            context_switches += 1
+
+    # Print processor results
+    print_results(
+        processors, processor_count, wait, turnaround, wait_times, turnaround_times
+    )
+    print("Context Switches: ", context_switches)
 
 
-quantum = 1 * 10**9
-FIFO("./processes.csv", 3, 3)
-SJF("./processes.csv", 3, 3)
-# RR('processes.csv', 3, 3, quantum)
+if __name__ == "__main__":
+    quantum = 1 * 10**9
+    print("Q2 FIFO Results\n")
+    FIFO("./processes.csv", 3, 3)
+    print("\n\nQ2 SJF Results\n")
+    SJF("./processes.csv", 3, 3)
+    print("\n\nQ2 RR Results\n")
+    RR("processes.csv", 3, 3, quantum)
