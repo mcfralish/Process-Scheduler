@@ -520,7 +520,7 @@ def RR(fname, num_slow, num_fast, quantum):
 
 
 if __name__ == "__main__":
-    quantum = 1 * 10**9
+    quantum = 5 * 10**9
     print("Q2 FIFO Results\n")
     FIFO("./processes.csv", 3, 3)
     print("\n\nQ2 SJF Results\n")
