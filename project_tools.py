@@ -2,6 +2,13 @@ import csv
 import random
 
 
+class processor:
+    def __init__(self, speed):
+        self.speed = speed
+        self.time_elapsed = 0
+        self.time_current = 0
+
+
 def generate(k, m, n, a, b):
     """
     Will generate a list of process tuples with the burst ranging between 10 * 10^n - 10 * 10^m and the memory between a - b

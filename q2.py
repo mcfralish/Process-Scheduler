@@ -1,15 +1,7 @@
 from statistics import mean
-from unicodedata import name
-from project_tools import sorted_processes, unsorted_processes
+from project_tools import sorted_processes, unsorted_processes, processor
 from math import sqrt
 from fractions import Fraction
-
-
-class processor:
-    def __init__(self, speed):
-        self.speed = speed
-        self.time_elapsed = 0
-        self.time_current = 0
 
 
 def set_threshold(processes, num_slow, num_fast):
