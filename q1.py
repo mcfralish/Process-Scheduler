@@ -1,35 +1,11 @@
-import random
+from concurrent.futures import process
+from project_tools import sorted_processes, unsorted_processes
 
 
-processes = []
-for i in range(250):
-    process = random.randint(1, 16000)
-    processes.append(process)
-
-time_quantum = 8000
-
-
-def fifo(processes):
-    print(processes)
-    wait_times = []
-    wait_time = 0
-    for i in range(250):
-        for j in range(i):
-            wait_time += processes[j]
-        wait_times.append(wait_time)
-        wait_time = 0
-    print("Average Wait Time for FIFO: " + str(sum(wait_times) / len(wait_times)))
-    turnaround_times = []
-    turnaround_time = processes[0]
-    for i in range(250):
-        for j in range(i):
-            turnaround_time += processes[j + 1]
-        turnaround_times.append(turnaround_time)
-        turnaround_time = processes[0]
-    print(
-        "Average Turnaround Time for FIFO: "
-        + str(sum(turnaround_times) / len(turnaround_times))
-    )
+def fifo(fname):
+    processes = unsorted_processes(fname)
+    for i in range(len(processes)):
+        print(processes[i][1])
 
 
 def sjf(processes):
@@ -69,6 +45,8 @@ def rr(processes, time_quantum):
         print("Iteration " + str(count) + ": " + str(processes))
 
 
-# fifo(processes)
-# sjf(processes)
-rr(processes, time_quantum)
+if __name__ == "__main__":
+    time_quantum = 1 * 10**9
+    fifo("./processes.csv")
+    # sjf(processes)
+    # rr(processes, time_quantum)
