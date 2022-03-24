@@ -6,6 +6,25 @@ def fifo(fname):
     processes = unsorted_processes(fname)
     for i in range(len(processes)):
         print(processes[i][1])
+    wait_times = []
+    wait_time = 0
+    for i in range(250):
+        for j in range(i):
+            wait_time += int(processes[j][1])
+        wait_times.append(wait_time)
+        wait_time = 0
+    print("Average Wait Time for FIFO: " + str(sum(wait_times) / len(wait_times)))
+    turnaround_times = []
+    turnaround_time = processes[0]
+    for i in range(250):
+        for j in range(i):
+            turnaround_time += int(processes[j + 1][1])
+        turnaround_times.append(turnaround_time)
+        turnaround_time = processes[0][1]
+    print(
+        "Average Turnaround Time for FIFO: "
+        + str(sum(turnaround_times) / len(turnaround_times))
+    )
 
 
 def sjf(processes):
@@ -46,7 +65,8 @@ def rr(processes, time_quantum):
 
 
 if __name__ == "__main__":
+    file = "./processes.csv"
     time_quantum = 1 * 10**9
-    fifo("./processes.csv")
+    fifo(file)
     # sjf(processes)
     # rr(processes, time_quantum)
