@@ -1,5 +1,5 @@
 from statistics import mean
-from project_tools import sorted_processes, unsorted_processes, processor
+from project_tools import sorted_processes, unsorted_processes, print_results, processor
 from math import sqrt
 from fractions import Fraction
 
@@ -63,25 +63,6 @@ def fast_step(processors, num_slow, num_fast):
 
     for i in range(num_fast):
         processors[i + num_slow].time_current -= mini
-
-
-def print_results(
-    processors, processor_count, wait, turnaround, wait_times, turnaround_times
-):
-    """
-    Prints results for question 2.
-    """
-    print()
-    for i in range(len(processors)):
-        print("Processor ", i, ":")
-        print("Time Elapsed: ", "{:e}".format(processors[i].time_elapsed))
-        print("Processor ran: ", processor_count[i], " times.")
-        print("Mean Wait: ", "{:e}".format(wait[i] / processor_count[i]))
-        print("Mean Turnaround: ", "{:e}".format(turnaround[i] / processor_count[i]))
-        print("")
-
-    print("Overall Mean Wait: ", "{:e}".format(mean(wait_times)))
-    print("Overall Mean Turnaround: ", "{:e}".format(mean(turnaround_times)))
 
 
 def FIFO(fname, num_slow, num_fast):
