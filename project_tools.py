@@ -1,5 +1,6 @@
 import csv
 import random
+from statistics import mean
 
 
 class processor:
@@ -9,7 +10,7 @@ class processor:
         self.time_current = 0
 
 
-def generate(k, m, n, a, b):
+def generate(k, m, n, a, b, c, d):
     """
     Will generate a list of process tuples with the burst ranging between 10 * 10^n - 10 * 10^m and the memory between a - b
     """
@@ -21,8 +22,11 @@ def generate(k, m, n, a, b):
     def mem():
         return random.randint(a, b)
 
+    def arrival():
+        return random.randint(c, d)
+
     for i in range(k):
-        new_process = (i, burst_time(), mem())
+        new_process = (i, burst_time(), mem(), arrival())
         proccesses.append(new_process)
 
     return proccesses
@@ -63,7 +67,26 @@ def unsorted_processes(fname):
         return unsortedlist
 
 
+def print_results(
+    processors, processor_count, wait, turnaround, wait_times, turnaround_times
+):
+    """
+    Prints results for question 2.
+    """
+    print()
+    for i in range(len(processors)):
+        print("Processor ", i, ":")
+        print("Time Elapsed: ", "{:e}".format(processors[i].time_elapsed))
+        print("Processor ran: ", processor_count[i], " times.")
+        print("Mean Wait: ", "{:e}".format(wait[i] / processor_count[i]))
+        print("Mean Turnaround: ", "{:e}".format(turnaround[i] / processor_count[i]))
+        print("")
+
+    print("Overall Mean Wait: ", "{:e}".format(mean(wait_times)))
+    print("Overall Mean Turnaround: ", "{:e}".format(mean(turnaround_times)))
+
+
 if __name__ == "__main__":
-    processes = generate(250, 6, 12, 1, 16000)
-    header = ["PID", "Burst Time", "Memory in MB"]
+    processes = generate(250, 6, 12, 1, 16000, 0, 1 * 10**14)
+    header = ["PID", "Burst Time", "Memory in MB", "Arrival Time"]
     write_to_file(processes, header, "./processes.csv")
