@@ -130,12 +130,14 @@ def SJF(fname):
         # After all processes that will finish prior to the process arriving
         arrived_queue.append(processes[i])
 
-    # for i in range(len(arrived_queue)):
-    #     burst_time = int(processes[i][1])
+    for i in range(len(arrived_queue)):
+        burst_time = int(processes[i][1])
 
-    #     for j in range(len())
+        times_left = []
+        for j in range(len(processors)):
+            times_left.append(processors[i].current_time)
 
-    #     while processors[pindex]
+        while processors[pindex]
 
     # Print processor results
     print_results(
