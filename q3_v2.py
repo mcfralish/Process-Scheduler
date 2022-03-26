@@ -16,6 +16,7 @@ def SJF(fname):
     lowPower_mem = 8000
     highPower_mem = 16000
 
+    # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
     processors = []
     for i in range(lowPower_cpus):
         processors.append(Processor(lowPower_speed, lowPower_mem))
@@ -116,7 +117,7 @@ def SJF(fname):
             processors[low_index].time_current += burst_time
 
             # Steps forward to simulate the passage of time so that one slow processor will be available
-            slow_step(processors, low_index)
+            slow_step(processors, lowPower_cpus)
 
             # Adds wait time to list of all wait times and to the total wait time for the selected processor
             wait_times.append(processors[low_index].time_elapsed)
