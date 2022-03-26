@@ -3,11 +3,12 @@ import random
 from statistics import mean
 
 
-class processor:
-    def __init__(self, speed):
+class Processor:
+    def __init__(self, speed, memory):
         self.speed = speed
         self.time_elapsed = 0
         self.time_current = 0
+        self.memory = memory
 
 
 def generate(k, m, n, a, b, c, d):

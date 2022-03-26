@@ -1,5 +1,5 @@
 from statistics import mean
-from project_tools import sorted_processes, unsorted_processes, print_results, processor
+from project_tools import sorted_processes, unsorted_processes, print_results, Processor
 from math import sqrt
 from fractions import Fraction
 
@@ -73,10 +73,10 @@ def FIFO(fname, num_slow, num_fast):
     # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
     processors = []
     for i in range(num_slow):
-        processors.append(processor(2))
+        processors.append(Processor(2, 16))
 
     for i in range(num_fast):
-        processors.append(processor(4))
+        processors.append(Processor(4, 16))
 
     # Creates a list of the processes from .csv file in order they are given
     processes = unsorted_processes(fname)
@@ -177,10 +177,10 @@ def SJF(fname, num_slow, num_fast):
     # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
     processors = []
     for i in range(num_slow):
-        processors.append(processor(2))
+        processors.append(Processor(2, 16))
 
     for i in range(num_fast):
-        processors.append(processor(4))
+        processors.append(Processor(4, 16))
 
     # Creates a list of the processes from .csv file in sorted order to accomodate SJF
     processes = sorted_processes(fname, 1)
@@ -283,10 +283,10 @@ def RR(fname, num_slow, num_fast, quantum):
     # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
     processors = []
     for i in range(num_slow):
-        processors.append(processor(2))
+        processors.append(Processor(2, 16))
 
     for i in range(num_fast):
-        processors.append(processor(4))
+        processors.append(Processor(4, 16))
 
     # Creates a list of the processes from .csv file in order they are given
     processes = unsorted_processes(fname)
