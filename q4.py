@@ -64,7 +64,7 @@ def SJF(fname):
         # Processes while i'th process has not yet arrived
         while total_time_elapsed < arrival_time:
 
-            # Defference between when the process will arrive and current time
+            # Difference between when the process will arrive and current time
             time_diff = arrival_time - total_time_elapsed
 
             # If nothing in the queue, just moves time forwards until this process arives
