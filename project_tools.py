@@ -1,6 +1,7 @@
 import csv
 import random
 from statistics import mean
+from math import sqrt
 
 
 class Processor:
@@ -66,6 +67,70 @@ def unsorted_processes(fname):
         unsortedlist = list(reader)
         unsortedlist.pop(0)
         return unsortedlist
+
+
+def slow_step(processors, num_slow):
+    """
+    Steps the slow processors through running until the one with the least amount of time remaining is finished with its current process.
+    """
+    current_slows = []
+    for i in range(num_slow):
+        current_slows.append(processors[i].time_current)
+
+    mini = min(current_slows)
+
+    for i in range(num_slow):
+        processors[i].time_current -= mini
+
+
+def fast_step(processors, num_slow, num_fast):
+    """
+    Steps the fast processors through running until the one with the least amount of time remaining is finished with its current process.
+    """
+    current_fasts = []
+    for i in range(num_fast):
+        current_fasts.append(processors[i + num_slow].time_current)
+
+    mini = min(current_fasts)
+
+    for i in range(num_fast):
+        processors[i + num_slow].time_current -= mini
+
+
+def set_threshold(processes, num_slow, num_fast, reverse):
+    """
+    Sets threshold proportionate to the amount of work expected from each set of processors. In a system with equal number fast and slow processors, with the slow running at half of the speed of the fast, the slow will be rewsponsible for 1/3 of the work.
+    """
+    total_burst = 0
+    min = float("inf")
+    for i in range(len(processes)):
+        burst = int(processes[i][1])
+        if burst < min:
+            min = burst
+        total_burst += burst
+
+    ratio = (num_slow * 2) / (num_slow * 2 + num_fast * 4)
+
+    if reverse:
+        ratio = 1 - ratio
+
+    mean = total_burst / len(processes)
+
+    def stdev():
+        sd = 0
+        for i in range(len(processes)):
+            sd += (int(processes[i][1]) - mean) ** 2
+
+        sd = sd / len(processes)
+        sd = sqrt(sd)
+        print("Stand Dev: ", "{:e}".format(sd))
+        return sd
+
+    print("ratio = ", ratio)
+    print("mean = ", "{:e}".format(mean))
+    print("min =", "{:e}".format(min))
+
+    return (ratio * mean) + stdev() * 1.5
 
 
 def print_results(
