@@ -239,7 +239,7 @@ def RR(fname, num_slow, num_fast, quantum):
     processes = unsorted_processes(fname)
 
     # Sets threshold
-    threshold = set_threshold(processes, num_slow, num_fast)
+    threshold = set_threshold(processes, num_slow, num_fast, False)
     print("Threshold set at: ", "{:e}".format(threshold))
 
     # Sets indices to iterate through proccessor list
