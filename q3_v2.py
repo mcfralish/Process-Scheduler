@@ -8,7 +8,7 @@ from project_tools import (
 )
 
 
-def SJF(fname):
+def run(fname):
     lowPower_speed = 2
     highPower_speed = 4
     highpower_cpus = 3
@@ -134,6 +134,24 @@ def SJF(fname):
             processor_count[low_index] += 1
 
     # Print processor results
+    print("\n\nQ3 Results")
     print_results(
-        processors, processor_count, wait, turnaround, wait_times, turnaround_times
+        processors,
+        processor_count,
+        wait,
+        turnaround,
+        wait_times,
+        turnaround_times,
+        False,
     )
+
+    give = {
+        "processors": processors,
+        "processor_count": processor_count,
+        "wait": wait,
+        "turnaround": turnaround,
+        "wait_times": wait_times,
+        "turnaround_times": turnaround_times,
+    }
+
+    return give

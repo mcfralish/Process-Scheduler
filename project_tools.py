@@ -69,35 +69,35 @@ def unsorted_processes(fname):
         return unsortedlist
 
 
-def slow_step(processors, num_slow):
+def slow_step(processors, slowps):
     """
     Steps the slow processors through running until the one with the least amount of time remaining is finished with its current process.
     """
     current_slows = []
-    for i in range(num_slow):
+    for i in range(slowps):
         current_slows.append(processors[i].time_current)
 
     mini = min(current_slows)
 
-    for i in range(num_slow):
+    for i in range(slowps):
         processors[i].time_current -= mini
 
 
-def fast_step(processors, num_slow, num_fast):
+def fast_step(processors, slowps, fastps):
     """
     Steps the fast processors through running until the one with the least amount of time remaining is finished with its current process.
     """
     current_fasts = []
-    for i in range(num_fast):
-        current_fasts.append(processors[i + num_slow].time_current)
+    for i in range(fastps):
+        current_fasts.append(processors[i + slowps].time_current)
 
     mini = min(current_fasts)
 
-    for i in range(num_fast):
-        processors[i + num_slow].time_current -= mini
+    for i in range(fastps):
+        processors[i + slowps].time_current -= mini
 
 
-def set_threshold(processes, num_slow, num_fast, reverse):
+def set_threshold(processes, slowps, fastps, reverse):
     """
     Sets threshold proportionate to the amount of work expected from each set of processors. In a system with equal number fast and slow processors, with the slow running at half of the speed of the fast, the slow will be rewsponsible for 1/3 of the work.
     """
@@ -109,7 +109,7 @@ def set_threshold(processes, num_slow, num_fast, reverse):
             min = burst
         total_burst += burst
 
-    ratio = (num_slow * 2) / (num_slow * 2 + num_fast * 4)
+    ratio = (slowps * 2) / (slowps * 2 + fastps * 4)
 
     if reverse:
         ratio = 1 - ratio
@@ -123,18 +123,13 @@ def set_threshold(processes, num_slow, num_fast, reverse):
 
         sd = sd / len(processes)
         sd = sqrt(sd)
-        print("Stand Dev: ", "{:e}".format(sd))
         return sd
-
-    print("ratio = ", ratio)
-    print("mean = ", "{:e}".format(mean))
-    print("min =", "{:e}".format(min))
 
     return (ratio * mean) + stdev() * 1.5
 
 
 def print_results(
-    processors, processor_count, wait, turnaround, wait_times, turnaround_times
+    processors, processor_count, wait, turnaround, wait_times, turnaround_times, RR
 ):
     """
     Prints results for question 2.
@@ -144,8 +139,11 @@ def print_results(
         print("Processor ", i, ":")
         print("Time Elapsed: ", "{:e}".format(processors[i].time_elapsed))
         print("Processor ran: ", processor_count[i], " times.")
-        print("Mean Wait: ", "{:e}".format(wait[i] / processor_count[i]))
-        print("Mean Turnaround: ", "{:e}".format(turnaround[i] / processor_count[i]))
+        if not RR:
+            print("Mean Wait: ", "{:e}".format(wait[i] / processor_count[i]))
+            print(
+                "Mean Turnaround: ", "{:e}".format(turnaround[i] / processor_count[i])
+            )
         print("")
 
     print("Overall Mean Wait: ", "{:e}".format(mean(wait_times)))

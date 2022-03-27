@@ -2,7 +2,7 @@ from project_tools import unsorted_processes, print_results, Processor
 import random
 
 
-def SJF(fname):
+def run(fname):
     """
     Schedules with an adapted SJF approach to incorporate random arrival of processes
     """
@@ -166,6 +166,24 @@ def SJF(fname):
         processor_count[pindex] += 1
 
     # Print processor results
+    print("\n\nQ4 Results")
     print_results(
-        processors, processor_count, wait, turnaround, wait_times, turnaround_times
+        processors,
+        processor_count,
+        wait,
+        turnaround,
+        wait_times,
+        turnaround_times,
+        False,
     )
+
+    give = {
+        "processors": processors,
+        "processor_count": processor_count,
+        "wait": wait,
+        "turnaround": turnaround,
+        "wait_times": wait_times,
+        "turnaround_times": turnaround_times,
+    }
+
+    return give
