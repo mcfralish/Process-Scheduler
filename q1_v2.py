@@ -74,6 +74,17 @@ def fifo(fname):
         False,
     )
 
+    give = {
+        "processors": processors,
+        "processor_count": processor_count,
+        "wait": wait,
+        "turnaround": turnaround,
+        "wait_times": wait_times,
+        "turnaround_times": turnaround_times,
+    }
+
+    return give
+
 
 def sjf(fname):
 
@@ -139,6 +150,17 @@ def sjf(fname):
         turnaround_times,
         False,
     )
+
+    give = {
+        "processors": processors,
+        "processor_count": processor_count,
+        "wait": wait,
+        "turnaround": turnaround,
+        "wait_times": wait_times,
+        "turnaround_times": turnaround_times,
+    }
+
+    return give
 
 
 def rr(fname, quantum):
