@@ -1,15 +1,5 @@
-from project_tools import unsorted_processes, print_results, processor
+from project_tools import unsorted_processes, print_results, Processor
 import random
-
-
-def step(processors, total_time_elapsed, step_amnt):
-
-    for i in range(len(processors)):
-        processors[i].time_current -= step_amnt
-        if processor[i].time_current < 0:
-            processor[i].time_current = 0
-
-    total_time_elapsed += step_amnt
 
 
 def SJF(fname):
@@ -20,7 +10,7 @@ def SJF(fname):
     # Creates proccessors for assigned task with uniform speed.
     processors = []
     for i in range(6):
-        processors.append(processor(1))
+        processors.append(Processor(1, 16))
 
     # Creates a list of the processes from .csv file sorted by arrival time
     processes = unsorted_processes(fname)
@@ -36,11 +26,28 @@ def SJF(fname):
     # Keeps track of time since we began running processors to determine whether a process has arrived yet.
     total_time_elapsed = 0
 
+    def step(processors, step_amnt):
+
+        for i in range(len(processors)):
+            processors[i].time_current -= step_amnt
+            if processors[i].time_current < 0:
+                processors[i].time_current = 0
+
+        nonlocal total_time_elapsed
+        total_time_elapsed += step_amnt
+
     # Creates a list to keep track of processes that have arrived, but have not been run yet
     arrived_queue = []
 
     # Will keep track of which processor to choose.
     pindex = 0
+
+    def find_min_time():
+        times_left = []
+        for j in range(len(processors)):
+            times_left.append(processors[j].time_current)
+
+        return min(times_left)
 
     # Creates lists to track wait times and turnaround times
     wait_times = []
@@ -64,33 +71,27 @@ def SJF(fname):
         # Processes while i'th process has not yet arrived
         while total_time_elapsed < arrival_time:
 
-            # Difference between when the process will arrive and current time
+            # Defference between when the process will arrive and current time
             time_diff = arrival_time - total_time_elapsed
 
             # If nothing in the queue, just moves time forwards until this process arives
             if not arrived_queue:
-                step(processors, total_time_elapsed, time_diff)
+                step(processors, time_diff)
 
             # If processes are in the queue
             else:
 
-                # Puts all the current times for each processor in a list
-                times_left = []
-                for j in range(len(processors)):
-                    times_left.append(processors[j].time_current)
-
-                # Finds the minimum remaining time on a processor
-                min_time_left = min(times_left)
+                min_time = find_min_time()
 
                 # If this min time is greater than time_diff
-                if time_diff < min_time_left:
+                if time_diff < min_time:
                     # Steps time forward until this processor arrives
-                    step(processors, total_time_elapsed, time_diff)
+                    step(processors, time_diff)
 
                 # If there is less time left for a processor to finish than for this process to arrive
                 else:
                     # Steps time forward until one processor finishes with its current process
-                    step(processors, total_time_elapsed, min_time_left)
+                    step(processors, min_time)
 
                     # Finds next available processor
                     while processors[pindex].time_current != 0:
@@ -130,14 +131,39 @@ def SJF(fname):
         # After all processes that will finish prior to the process arriving
         arrived_queue.append(processes[i])
 
+    # After all processes have been added to queue, step to free up the closest proccessor to being done
+    step(processors, find_min_time())
+
+    # Processes all remaining processes in arrived queue
     for i in range(len(arrived_queue)):
-        burst_time = int(processes[i][1])
+        burst_time = int(arrived_queue[i][1])
+        arrival_time = int(arrived_queue[i][3])
 
-        times_left = []
-        for j in range(len(processors)):
-            times_left.append(processors[i].current_time)
+        # Finds next available processor
+        while processors[pindex].time_current != 0:
+            pindex += 1
+            if pindex == len(processors):
+                pindex = 0
 
-        while processors[pindex]
+        # Adds burst time to the selected processor's job queue
+        processors[pindex].time_current += burst_time
+
+        # Steps forward until first processor is finished
+        step(processors, find_min_time())
+
+        # Adds wait time to list of all wait times and to the total wait time for the selected processor
+        wait_times.append(processors[pindex].time_elapsed - arrival_time)
+        wait[pindex] += processors[pindex].time_elapsed - arrival_time
+
+        # Adds burst time of current process to selected processor's elapsed time
+        processors[pindex].time_elapsed += burst_time
+
+        # Adds turnaround time to list of all turnaround times and to the total turnaround time of the selected processor
+        turnaround_times.append((processors[pindex].time_elapsed) - arrival_time)
+        turnaround[pindex] += processors[pindex].time_elapsed - arrival_time
+
+        # Increments the number of times the processor ran
+        processor_count[pindex] += 1
 
     # Print processor results
     print_results(
