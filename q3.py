@@ -1,211 +1,157 @@
-import csv
-from functools import cmp_to_key
-
-
-class Process:
-    def __init__(self, process_id, cycles, memory_footprint) -> None:
-        self.PID = process_id
-        self.clock_cycles = cycles
-        self.memory_footprint = memory_footprint
-        self.wait = 0
-        self.turn_around = 0
-
-    def __str__(self) -> str:
-        return (
-            f"Process ID: {self.PID},"
-            f" Clock cycles: {self.clock_cycles}, Memory"
-            f" {self.memory_footprint} MB, Wait time: {self.wait}"
-            f"ns, Turnaround time: {self.turn_around} ns"
-        )
-
-    def increment_wait(self, time):
-        """
-        Increments wait and turnaround time
-        """
-        self.wait += time
-        self.turn_around += time
-
-    def comparator(a, b):
-        if a.clock_cycles > b.clock_cycles:
-            return 1
-        elif a.clock_cycles < b.clock_cycles:
-            return -1
-        return 0
-
-    def is_done(self) -> bool:
-        return self.clock_cycles == 0
-
-
-class Processor:
-    def __init__(self, speed, memory) -> None:
-        self.speed = speed
-        # measured in Ghz
-        self.memory = memory
-        self.curr_process = None
-        self.timer = 0
-
-    def add_process(self, new_process):
-        if isinstance(new_process, Process):
-            self.curr_process = new_process
-            return
-        else:
-            raise TypeError("Must be a new process")
-
-    def has_process(self):
-        if self.curr_process is not None:
-            return True
-        return False
-
-    def fits_mem(self):
-        return self.curr_process.memory_footprint < self.memory
-
-    def do_work(self, time):
-        if not isinstance(self.curr_process, Process):
-            raise TypeError("Must be a process")
-        if self.fits_mem():
-            completedCycles = time * self.speed
-            self.curr_process.clock_cycles -= completedCycles
-            self.curr_process.turn_around += time
-        else:
-            raise RuntimeError("Process doesn't fit on CPU")
-
-    def time_to_complete(self):
-        if isinstance(self.curr_process, Process):
-            return self.curr_process.clock_cycles / self.speed
-
-
-lowPower_speed = 2
-highPower_speed = 4
-highpower_cpus = 3
-lowPower_cps = 3
-lowPower_mem = 8000
-highPower_mem = 16000
-processList_queue = []
-lowPower_processList_queue = []
-highpower_processList_queue = []
-finished_processList = []
-lowPower_processList = []
-highpower_processList = []
-
-for i in range(lowPower_cps):
-    lowPower_processList.append(Processor(2, lowPower_mem))
-i = 0
-for i in range(highpower_cpus):
-    highpower_processList.append(Processor(4, highPower_mem))
-    """
-    Reads csv file and uses data within the file 
-    """
-with open("./processes.csv", newline="") as csv_file:
-    csv_reader = csv.DictReader(csv_file)
-    for row in csv_reader:
-        process_id = int(f'{row["PID"]}')
-        burst_time = int(f'{row["Burst Time"]}')
-        memory_footprint = int(f'{row["Memory in MB"]}')
-        processList_queue.append(Process(process_id, burst_time, memory_footprint))
-
-highPower_wait_time = 0
-lowPower_wait_time = 0
-
-for process in processList_queue:
-    """
-    Process is assigned to higher power CPU if it cannot fit in the lower power CPU
-    """
-
-    if process.memory_footprint > lowPower_mem:
-        highpower_processList_queue.append(process)
-        highPower_wait_time += process.clock_cycles / highPower_speed
-        continue
-
-    if (
-        highPower_wait_time
-        + (process.clock_cycles / (highpower_cpus * highPower_speed))
-    ) < (lowPower_wait_time + (process.clock_cycles / (lowPower_cps * lowPower_speed))):
-        highpower_processList_queue.append(process)
-        highPower_wait_time += process.clock_cycles / highPower_speed
-    else:
-        lowPower_processList_queue.append(process)
-        lowPower_wait_time += process.clock_cycles / lowPower_speed
-
-# Sorts processes to find shortest process
-lowPower_processList_queue = sorted(
-    lowPower_processList_queue, key=cmp_to_key(Process.comparator)
-)
-highpower_processList_queue = sorted(
-    highpower_processList_queue, key=cmp_to_key(Process.comparator)
+from project_tools import (
+    sorted_processes,
+    print_results,
+    slow_step,
+    fast_step,
+    set_threshold,
+    Processor,
 )
 
-while len(lowPower_processList_queue) != 0 or len(highpower_processList_queue) != 0:
 
-    for processor in lowPower_processList:
-        if not processor.has_process() or processor.curr_process.is_done():
-            if processor.has_process():
-                finished_processList.append(processor.curr_process)
+def run(fname):
+    lowPower_speed = 2
+    highPower_speed = 4
+    highpower_cpus = 3
+    lowPower_cpus = 3
+    lowPower_mem = 8000
+    highPower_mem = 16000
 
-            if len(lowPower_processList_queue) != 0:
-                processor.add_process(lowPower_processList_queue[0])
-                lowPower_processList_queue.pop(0)
-            else:
-                processor.curr_process = None
+    # Creates proccessors for assigned task, adding the slow ones, then the fast ones to create a bigLITTLE architecture
+    processors = []
+    for i in range(lowPower_cpus):
+        processors.append(Processor(lowPower_speed, lowPower_mem))
 
-    for processor in highpower_processList:
-        if not processor.has_process() or processor.curr_process.is_done():
-            if processor.has_process():
-                finished_processList.append(processor.curr_process)
+    for i in range(highpower_cpus):
+        processors.append(Processor(highPower_speed, highPower_mem))
 
-            if len(highpower_processList_queue) != 0:
-                processor.add_process(highpower_processList_queue[0])
-                highpower_processList_queue.pop(0)
-            else:
-                processor.curr_process = None
+    processes = sorted_processes(fname, 1)
 
-    shortest_time_left = 10**12 + 1
-    # Find shortest time
-    for processor in lowPower_processList:
-        if processor.has_process():
-            shortest_time_left = min(shortest_time_left, processor.time_to_complete())
+    threshold = set_threshold(processes, lowPower_cpus, highpower_cpus, reverse=True)
+    low_index = 0
+    high_index = lowPower_cpus
 
-    for processor in highpower_processList:
-        if processor.has_process():
-            shortest_time_left = min(shortest_time_left, processor.time_to_complete())
+    wait_times = []
+    turnaround_times = []
 
-    for processor in lowPower_processList:
-        if processor.has_process():
-            processor.do_work(shortest_time_left)
+    processor_count = []
+    wait = []
+    turnaround = []
+    for i in range(len(processors)):
+        processor_count.append(0)
+        wait.append(0)
+        turnaround.append(0)
 
-    for processor in highpower_processList:
-        if processor.has_process():
-            processor.do_work(shortest_time_left)
+    for process in processes:
+        """
+        Process is assigned to higher power CPU if it cannot fit in the lower power CPU
+        """
+        burst_time = int(process[1])
+        memory_footprint = int(process[2])
 
-    # Increments wait time for all processes in queue
-    for process in lowPower_processList_queue:
-        process.increment_wait(shortest_time_left)
+        if memory_footprint > lowPower_mem:
 
-    for process in highpower_processList_queue:
-        process.increment_wait(shortest_time_left)
+            # Find next available fast processor
+            while processors[high_index].time_current != 0:
+                high_index += 1
+                if high_index == (lowPower_cpus + highpower_cpus):
+                    high_index -= highpower_cpus
 
-# Completes all processes left in queue
-for processor in lowPower_processList:
-    if processor.has_process() and (not processor.curr_process.is_done()):
-        processor.do_work(processor.time_to_complete())
-        finished_processList.append(processor.curr_process)
-    elif processor.has_process():
-        finished_processList.append(processor.curr_process)
+            # Adds burst time to the selected processor's job queue
+            processors[high_index].time_current += burst_time
 
-for processor in highpower_processList:
-    if processor.has_process() and (not processor.curr_process.is_done()):
-        processor.do_work(processor.time_to_complete())
-        finished_processList.append(processor.curr_process)
-    elif processor.has_process():
-        finished_processList.append(processor.curr_process)
+            # Steps forward to simulate the passage of time so that one slow processor will be available
+            fast_step(processors, lowPower_cpus, highpower_cpus)
 
-total_wait_time = 0
-total_turnaround_time = 0
-for process in finished_processList:
-    total_wait_time += process.wait
-    total_turnaround_time += process.turn_around
+            # Adds wait time to list of all wait times and to the total wait time for the selected processor
+            wait_times.append(processors[high_index].time_elapsed)
+            wait[high_index] += processors[high_index].time_elapsed
 
-avg_wait = total_turnaround_time / len(finished_processList)
-avg_turnaround = total_turnaround_time / len(finished_processList)
+            # Adds half the burst time of current process to selected processor's elapsed time
+            # These proccessors run at twice the speed of the slower ones
+            processors[high_index].time_elapsed += burst_time / 2
 
-print(f"Average wait time: {round(avg_wait * (10**-9), 3)} s")
-print(f"Average turnaround time: {round(avg_turnaround * (10**-9), 3)} s")
+            # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+            turnaround_times.append(processors[high_index].time_elapsed)
+            turnaround[high_index] += processors[high_index].time_elapsed
+
+            # Increments the amount of times the processor ran
+            processor_count[high_index] += 1
+
+        elif burst_time > threshold:
+
+            # Find next available fast processor
+            while processors[high_index].time_current != 0:
+                high_index += 1
+                if high_index == (lowPower_cpus + highpower_cpus):
+                    high_index -= highpower_cpus
+
+            # Adds burst time to the selected processor's job queue
+            processors[high_index].time_current += burst_time
+
+            # Steps forward to simulate the passage of time so that one slow processor will be available
+            fast_step(processors, lowPower_cpus, highpower_cpus)
+
+            # Adds wait time to list of all wait times and to the total wait time for the selected processor
+            wait_times.append(processors[high_index].time_elapsed)
+            wait[high_index] += processors[high_index].time_elapsed
+
+            # Adds half the burst time of current process to selected processor's elapsed time
+            # These proccessors run at twice the speed of the slower ones
+            processors[high_index].time_elapsed += burst_time / 2
+
+            # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+            turnaround_times.append(processors[high_index].time_elapsed)
+            turnaround[high_index] += processors[high_index].time_elapsed
+
+            # Increments the amount of times the processor ran
+            processor_count[high_index] += 1
+
+        else:
+            # find the next available slow processor
+            while processors[low_index].time_current != 0:
+                low_index += 1
+                if low_index == lowPower_cpus:
+                    low_index -= lowPower_cpus
+
+            # Adds burst time to the selected processor's job queue
+            processors[low_index].time_current += burst_time
+
+            # Steps forward to simulate the passage of time so that one slow processor will be available
+            slow_step(processors, lowPower_cpus)
+
+            # Adds wait time to list of all wait times and to the total wait time for the selected processor
+            wait_times.append(processors[low_index].time_elapsed)
+            wait[low_index] += processors[low_index].time_elapsed
+
+            # Adds burst time of current process to selected processor's elapsed time
+            processors[low_index].time_elapsed += burst_time
+
+            # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
+            turnaround_times.append(processors[low_index].time_elapsed)
+            turnaround[low_index] += processors[low_index].time_elapsed
+
+            # Increments the amount of times the processor ran
+            processor_count[low_index] += 1
+
+    # Print processor results
+    print("\n\nQ3 Results")
+    print_results(
+        processors,
+        processor_count,
+        wait,
+        turnaround,
+        wait_times,
+        turnaround_times,
+        False,
+    )
+
+    give = {
+        "processors": processors,
+        "processor_count": processor_count,
+        "wait": wait,
+        "turnaround": turnaround,
+        "wait_times": wait_times,
+        "turnaround_times": turnaround_times,
+    }
+
+    return give
