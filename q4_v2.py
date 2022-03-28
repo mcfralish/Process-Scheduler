@@ -7,6 +7,31 @@ def run(fname):
     Schedules with an adapted SJF approach to incorporate random arrival of processes
     """
 
+    def step(step_amnt):
+
+        for processor in processors:
+            processor.time_current -= step_amnt
+            if processor.time_current < 0:
+                processor.time_current = 0
+
+        nonlocal TTE
+        TTE += step_amnt
+        # print("TTE in method after step: ", TTE)
+
+    def find_min_time():
+        times_left = []
+        for processor in processors:
+            times_left.append(processor.time_current)
+
+        return min(times_left)
+
+    def find_max_time():
+        times_left = []
+        for processor in processors:
+            times_left.append(processor.time_elapsed)
+
+        return max(times_left) + gap_time
+
     # Creates proccessors for assigned task with uniform speed.
     processors = []
     for i in range(6):
@@ -24,38 +49,13 @@ def run(fname):
     processes.sort(key=lambda x: x[3])
 
     # Keeps track of time since we began running processors to determine whether a process has arrived yet.
-    total_time_elapsed = 0
-
-    def step(processors, step_amnt):
-
-        for i in range(len(processors)):
-            processors[i].time_current -= step_amnt
-            if processors[i].time_current < 0:
-                processors[i].time_current = 0
-
-        nonlocal total_time_elapsed
-        total_time_elapsed += step_amnt
-        # print("TTE in method after step: ", total_time_elapsed)
+    TTE = 0
 
     # Creates a list to keep track of processes that have arrived, but have not been run yet
     arrived_queue = []
 
     # Will keep track of which processor to choose.
     pindex = 0
-
-    def find_min_time():
-        times_left = []
-        for j in range(len(processors)):
-            times_left.append(processors[j].time_current)
-
-        return min(times_left)
-
-    def find_max_time():
-        times_left = []
-        for j in range(len(processors)):
-            times_left.append(processors[j].time_elapsed)
-
-        return max(times_left) + gap_time
 
     # Creates lists to track wait times and turnaround times
     wait_times = []
@@ -74,44 +74,54 @@ def run(fname):
         turnaround.append(0)
 
     # Does the scheduling
-    for i in range(len(processes)):
+    i = 0
+    while i < range(len(processes)):
 
         # Sets arrival time for i'th proccess
         arrival_time = int(processes[i][3])
 
         # Processes while i'th process has not yet arrived
-        while find_max_time() < arrival_time:
-            print("Max Time(while max < arrival", find_max_time())
+        if TTE >= arrival_time:
+            arrived_queue.append(processes[i])
+            i += 1
 
-            # Defference between when the process will arrive and current time
-            time_diff = arrival_time - find_max_time()
+        else:
+            if i < 20:
+                print("Working on process:", i)
+                print("Max Time(while max < arrival:", "{:e}".format(find_max_time()))
+                print("TTE(while max < arrival:", "{:e}".format(TTE))
+
+            # Difference between when the process will arrive and current time
+            time_diff = arrival_time - TTE
 
             # If nothing in the queue, just moves time forwards until this process arives
             if not arrived_queue:
                 gap_time += time_diff
-                step(processors, time_diff)
-                # print("TTE after step out of method (no queue): ", find_max_time())
+                step(time_diff)
+                # print("TTE after step out of method (no queue): ", TTE)
 
             # If processes are in the queue
             else:
+
                 min_time = find_min_time()
+                step(min(time_diff, min_time))
 
                 # If this min time is greater than time_diff
                 if time_diff < min_time:
                     # Steps time forward until this processor arrives
-                    step(processors, time_diff)
+                    step(time_diff)
                     # print(
                     #     "TTE after step out of method (timediff < min): ",
-                    #     find_max_time(),
+                    #     TTE,
                     # )
 
                 # If there is less time left for a processor to finish than for this process to arrive
                 else:
                     # Steps time forward until one processor finishes with its current process
-                    step(processors, min_time)
+                    step(min_time)
                     # print(
                     #     "TTE after step out of method (timediff >= min): ",
-                    #     find_max_time(),
+                    #     TTE,
                     # )
 
                     # Finds next available processor
@@ -134,7 +144,7 @@ def run(fname):
                     # Adds wait time to list of all wait times and to the total wait time for the selected processor
                     wait_times.append((processors[pindex].time_elapsed) - aarrival_time)
                     wait[pindex] += processors[pindex].time_elapsed - aarrival_time
-                    # print("Arrival Time: %d    TTE: %d   Wait Time: %d" % (aarrival_time, find_max_time(), processor.))
+                    # print("Arrival Time: %d    TTE: %d   Wait Time: %d" % (aarrival_time, TTE, processor.))
 
                     # Adds burst time of current process to selected processor's elapsed time
                     processors[pindex].time_elapsed += aburst_time
@@ -150,14 +160,11 @@ def run(fname):
                     # Increments the amount of times the processor ran
                     processor_count[pindex] += 1
 
-        # After all processes that will finish prior to the process arriving
-        arrived_queue.append(processes[i])
-
     # After all processes have been added to queue, step to free up the closest proccessor to being done
-    step(processors, find_min_time())
+    step(find_min_time())
     # print(
     #     "TTE after step out of method (prior to starting remainder): ",
-    #     find_max_time(),
+    #     TTE,
     # )
 
     # Processes all remaining processes in arrived queue
@@ -175,8 +182,8 @@ def run(fname):
         processors[pindex].time_current += burst_time
 
         # Steps forward until first processor is finished
-        step(processors, find_min_time())
-        # print("TTE after step out of method (in remainder): ", find_max_time())
+        step(find_min_time())
+        # print("TTE after step out of method (in remainder): ", TTE)
 
         # Adds wait time to list of all wait times and to the total wait time for the selected processor
         wait_times.append(processors[pindex].time_elapsed - arrival_time)
@@ -195,10 +202,10 @@ def run(fname):
     # Print processor results
     print("\n\nQ4 Results")
 
-    print("Wait Times: ", wait_times)
-    print("TA Times: ", turnaround_times)
+    # print("Wait Times: ", wait_times)
+    # print("TA Times: ", turnaround_times)
 
-    # print("TTE afterwards: ", "{:e}".format(find_max_time()))
+    # print("TTE afterwards: ", "{:e}".format(TTE))
     print_results(
         processors,
         processor_count,

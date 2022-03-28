@@ -1,6 +1,6 @@
-import q1_v2 as q1
+import q1
 import q2
-import q3_v2 as q3
+import q3
 import q4
 
 file = "./processes.csv"
