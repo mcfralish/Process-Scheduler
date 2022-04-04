@@ -194,36 +194,38 @@ def rr(fname, quantum):
         turnaround.append(0)
 
     i = 0
-    j = 0
     context_switches = 0
     allEmpty = False
     firstEmpty = None
     pindex = 0
-    firstTrip = True
+    remaining_time = []
+
+    for process in processes:
+        remaining_time.append(int(process[1]))
 
     while not allEmpty:
         # loops i when it goes over the number of processes to start back at the beginning
         if i == len(processes):
-            firstTrip = False
             i = 0
 
         burst_time = int(processes[i][1])
+        remaining_burst = remaining_time[i]
 
         # Determines if every process has been run to 0 remaining burst time
         # then terminates the loop
-        if (burst_time == 0) and (i == firstEmpty):
+        if (remaining_burst == 0) and (i == firstEmpty):
             allEmpty = True
 
         # Determines if this is the first time it has detected a zero'd burst time
         # then increments i and starts loop again
-        elif (burst_time == 0) and firstEmpty is None:
+        elif (remaining_burst == 0) and firstEmpty is None:
             firstEmpty = i
             i += 1
 
         # Will trigger if current process has a remaining burst time of 0
         # and the one before was also 0.
         # Increments i and restarts
-        elif burst_time == 0:
+        elif remaining_burst == 0:
             i += 1
 
         # Triggers if all checks prior fail and the burst time is an integer greater than 0
@@ -239,28 +241,27 @@ def rr(fname, quantum):
                 if pindex == num_processors:
                     pindex -= num_processors
 
-            if firstTrip:
-                # Adds wait time to list of all wait times and to the total wait time for the selected processor
-                wait_times[i] = processors[pindex].time_elapsed
-                wait[pindex] += processors[pindex].time_elapsed
-
             # Determines if remaining burst time is less than a quantum or not
-            if burst_time <= quantum:
+            if remaining_burst <= quantum:
 
                 # Adds burst time to the selected processor's job queue
-                processors[pindex].time_current += burst_time
+                processors[pindex].time_current += remaining_burst
 
                 # Steps forward to simulate the passage of time so that one slow processor will be available
                 slow_step(processors, num_processors)
 
                 # Adds burst time of current process to selected processor's elapsed time
-                processors[pindex].time_elapsed += burst_time
+                processors[pindex].time_elapsed += remaining_burst
+
+                # Adds wait time to list of all wait times and to the total wait time for the selected processor
+                wait_times[i] = processors[pindex].time_elapsed - burst_time
+                wait[pindex] += processors[pindex].time_elapsed - burst_time
 
                 # Adds turnaround time to list of all turnaround times and to the total turnaround time for the selected processor
                 turnaround_times[i] = processors[pindex].time_elapsed
                 turnaround[pindex] += processors[pindex].time_elapsed
 
-                processes[i][1] = 0
+                remaining_time[i] = 0
 
             else:
                 # Adds quantum to the selected processor's job queue
@@ -273,7 +274,7 @@ def rr(fname, quantum):
                 processors[pindex].time_elapsed += quantum
 
                 # Resets the burst time to subtract the quantum
-                processes[i][1] = burst_time - quantum
+                remaining_time[i] = remaining_burst - quantum
 
             # Increments the amount of times the processor ran
             processor_count[pindex] += 1
